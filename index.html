@@ -2,7 +2,7 @@
 <html lang="es" class="h-full">
  <head>
   <meta charset="UTF-8">
-  <title>Boda Laura + Xocoyotzin | Álbum Infinito</title>
+  <title>Boda Laura + X | Álbum Infinito</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <script src="https://cdn.tailwindcss.com"></script>
   
@@ -105,7 +105,7 @@
         opacity: 1 !important;
         transform: none !important;
         margin-bottom: 0px;
-        background-color: #f5f1ed; /* Fondo base para asegurar que no salga transparente */
+        background-color: #f5f1ed; 
     }
 
     html { scroll-behavior: smooth; }
@@ -115,7 +115,7 @@
  <body class="h-full w-full font-sans-clean bg-white text-gray-800">
   <div id="app-root" class="app-wrapper overflow-auto flex flex-col">
    
-   <audio id="bg-music" loop>
+   <audio id="bg-music" loop preload="auto">
        <source src="cancion.mp3" type="audio/mp3">
    </audio>
 
@@ -152,7 +152,7 @@
         </button> 
         
         <button id="btn-go-album" type="button" class="w-full flex items-center justify-center gap-3 p-4 bg-white border border-[#c9a961] text-[#c9a961] rounded-lg shadow-sm hover:bg-gray-50 transition-all group cursor-pointer">
-            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" stroke-linecap="round" stroke-linejoin="round"/></svg>
             <span class="font-sans-clean text-sm font-bold tracking-wide">VER ÁLBUM DIGITAL</span> 
         </button>
 
@@ -262,6 +262,7 @@
 
     <section id="page-album" class="hidden bg-[#ebe5df] w-full h-screen fixed top-0 left-0 z-50 flex flex-col">
         <div class="w-full h-16 flex items-center justify-between px-4 bg-white/60 backdrop-blur shadow-sm z-50 shrink-0">
+             
              <button id="btn-exit-album" class="flex items-center gap-2 px-3 py-1.5 bg-white rounded-full text-[#c9a961] shadow-sm font-sans-clean text-sm font-bold border border-gray-100">
                 <span>← Volver</span>
              </button>
@@ -270,6 +271,7 @@
                  <button id="btn-music-toggle" class="w-8 h-8 flex items-center justify-center rounded-full bg-white/80 text-gray-400 hover:text-[#c9a961] shadow-sm transition-all border border-gray-100" title="Activar/Desactivar Música">
                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
                  </button>
+
                  <div class="font-sans-clean text-xs text-gray-500">
                     <span id="current-page">1</span> / <span id="total-pages">--</span>
                  </div>
@@ -432,16 +434,15 @@
         // --- FIX CRITICO: ESPERAR CARGA DE IMAGENES Y CORS ---
         const images = pdfContainer.querySelectorAll('img');
         const imagePromises = Array.from(images).map(img => {
-            img.crossOrigin = "anonymous"; // CLAVE PARA QUE NO SALGAN BLANCAS
+            img.crossOrigin = "anonymous"; 
             if (img.complete) return Promise.resolve();
             return new Promise(resolve => {
                 img.onload = resolve;
-                img.onerror = resolve; // Continuar aunque falle una
+                img.onerror = resolve; 
             });
         });
         await Promise.all(imagePromises);
         
-        // Pequeña espera extra para renderizado
         await new Promise(r => setTimeout(r, 1000));
 
         const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
@@ -881,11 +882,42 @@
         );
     });
 
-    // --- NAVEGACIÓN GENERAL ---
+    // --- NAVEGACIÓN GENERAL (CON AUTOPLAY MUSIC) ---
     btnGoUpload.addEventListener('click', () => { pageHome.classList.add('hidden'); pageUpload.classList.remove('hidden'); pageAlbum.classList.add('hidden'); window.scrollTo(0,0); });
-    btnGoAlbum.addEventListener('click', () => { pageHome.classList.add('hidden'); pageUpload.classList.add('hidden'); pageAlbum.classList.remove('hidden'); currentAlbumPage = 1; updatePageVisibility(); window.scrollTo(0,0); });
+    
+    // AL ENTRAR AL ALBUM
+    btnGoAlbum.addEventListener('click', () => { 
+        // 1. Play música inmediatamente (User gesture)
+        bgMusic.play().then(() => {
+            isMusicPlaying = true;
+            updateMusicIcon();
+        }).catch(e => {
+            console.log("Autoplay bloqueado:", e);
+            isMusicPlaying = false;
+            updateMusicIcon();
+        });
+
+        pageHome.classList.add('hidden'); 
+        pageUpload.classList.add('hidden'); 
+        pageAlbum.classList.remove('hidden'); 
+        currentAlbumPage = 1; 
+        updatePageVisibility(); 
+        window.scrollTo(0,0); 
+    });
+
+    // AL SALIR DEL ALBUM
+    btnExitAlbum.addEventListener('click', () => { 
+        // 1. Stop música
+        bgMusic.pause();
+        bgMusic.currentTime = 0; // Reiniciar
+        isMusicPlaying = false;
+        updateMusicIcon();
+
+        pageAlbum.classList.add('hidden'); 
+        pageHome.classList.remove('hidden'); 
+    });
+
     btnBackHome.addEventListener('click', () => { pageUpload.classList.add('hidden'); pageHome.classList.remove('hidden'); });
-    btnExitAlbum.addEventListener('click', () => { pageAlbum.classList.add('hidden'); pageHome.classList.remove('hidden'); });
 
     uploadTriggerBtn.addEventListener('click', () => realInput.click());
     dropZone.addEventListener('click', () => realInput.click());
