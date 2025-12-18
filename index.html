@@ -115,7 +115,6 @@
    
    <audio id="bg-music" loop>
        <source src="cancion.mp3" type="audio/mp3">
-       <source src="cancion.ogg" type="audio/ogg">
    </audio>
 
    <main class="flex-1 h-full">
@@ -296,8 +295,10 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
-    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    // IMPORTANTE: deleteObject AHORA ESTÁ AQUÍ
+    import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
+    // IMPORTANTE: getDoc AHORA ESTÁ AQUÍ
+    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, deleteDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     // --- CONFIGURACIÓN: FECHA DE DESBLOQUEO DEL PDF ---
     const FECHA_DESBLOQUEO = new Date("2025-12-27T00:00:00"); 
@@ -466,12 +467,33 @@
     }
 
 
-    // --- FUNCION BORRAR (ADMIN) ---
+    // --- FUNCION BORRAR COMPLETA (DB + STORAGE) ---
     window.deletePhoto = async (id) => {
-        if(confirm("⚠️ ¿Estás seguro de borrar este recuerdo para siempre?")) {
+        if(confirm("⚠️ ¿Estás seguro de borrar este recuerdo para siempre? (Se liberará espacio)")) {
             try {
-                await deleteDoc(doc(db, "album", id));
-                showToast("Recuerdo eliminado 🗑️");
+                // 1. Obtener datos para saber el nombre del archivo
+                const docRef = doc(db, "album", id);
+                const docSnap = await getDoc(docRef);
+                
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    const fileUrl = data.url_imagen;
+
+                    // 2. Intentar borrar de Storage
+                    try {
+                        const fileRef = ref(storage, fileUrl);
+                        await deleteObject(fileRef);
+                    } catch (storageError) {
+                        console.warn("No se pudo borrar archivo (quizás no existía):", storageError);
+                    }
+
+                    // 3. Borrar de base de datos
+                    await deleteDoc(docRef);
+                    showToast("Recuerdo eliminado totalmente 🗑️");
+                } else {
+                    showToast("El recuerdo ya no existe");
+                }
+
             } catch (e) {
                 alert("Error al borrar: " + e.message);
             }
@@ -692,6 +714,73 @@
         return '';
     }
 
+    // --- CONTROLES Y UTILIDADES ---
+    function updatePageVisibility() {
+        const pages = document.querySelectorAll('.album-page');
+        pages.forEach((page) => {
+            const num = parseInt(page.dataset.page);
+            if (num === currentAlbumPage) {
+                page.classList.remove('hidden', 'page-exit', 'page-enter');
+                page.classList.add('page-active');
+            } else {
+                page.classList.add('hidden');
+                page.classList.remove('page-active');
+            }
+        });
+        currentPageDisplay.textContent = currentAlbumPage;
+        albumPrev.classList.toggle('hidden', currentAlbumPage <= 1);
+        albumNext.classList.toggle('hidden', currentAlbumPage >= totalAlbumPages);
+    }
+
+    albumNext.addEventListener('click', () => {
+        if(currentAlbumPage < totalAlbumPages) {
+            const cur = document.querySelector(`.album-page[data-page="${currentAlbumPage}"]`);
+            cur.classList.remove('page-active');
+            cur.classList.add('page-exit');
+            currentAlbumPage++;
+            const next = document.querySelector(`.album-page[data-page="${currentAlbumPage}"]`);
+            next.classList.remove('hidden');
+            next.classList.add('page-enter');
+            setTimeout(() => {
+                cur.classList.add('hidden');
+                next.classList.remove('page-enter');
+                next.classList.add('page-active');
+                updatePageVisibility();
+            }, 600);
+        }
+    });
+
+    albumPrev.addEventListener('click', () => {
+        if(currentAlbumPage > 1) {
+            currentAlbumPage--;
+            updatePageVisibility();
+        }
+    });
+    
+    document.addEventListener("keydown", (e) => {
+      if (!pageAlbum || pageAlbum.classList.contains("hidden")) return;
+      if (e.key === "ArrowRight") { if(currentAlbumPage < totalAlbumPages) albumNext.click(); } 
+      else if (e.key === "ArrowLeft") { if(currentAlbumPage > 1) albumPrev.click(); }
+    });
+
+    function updateUploadGrid(photos) {
+        firebaseGallery.innerHTML = '';
+        if(photos.length === 0) {
+            firebaseGallery.innerHTML = '<div class="col-span-full text-center text-gray-400">Cargando...</div>';
+            return;
+        }
+        photos.forEach(item => {
+            const div = document.createElement('div');
+            div.className = "aspect-square rounded-lg shadow-sm overflow-hidden bg-gray-100 relative";
+            const deleteBtn = isAdminMode ? `<div class="delete-btn" onclick="window.deletePhoto('${item.id}')">🗑️</div>` : '';
+            let content;
+            if(item.type === 'video') content = `<video src="${item.url}" class="w-full h-full object-cover"></video>`;
+            else content = `<img src="${item.url}" class="w-full h-full object-cover" loading="lazy">`;
+            div.innerHTML = `${deleteBtn}${content}`;
+            firebaseGallery.appendChild(div);
+        });
+    }
+
     // --- NAVEGACIÓN ---
     const pageHome = document.getElementById('page-home');
     const pageUpload = document.getElementById('page-upload');
@@ -780,36 +869,9 @@
 
     // --- NAVEGACIÓN GENERAL ---
     btnGoUpload.addEventListener('click', () => { pageHome.classList.add('hidden'); pageUpload.classList.remove('hidden'); pageAlbum.classList.add('hidden'); window.scrollTo(0,0); });
-    
-    // AL ENTRAR AL ALBUM, INICIAMOS MUSICA
-    btnGoAlbum.addEventListener('click', () => { 
-        pageHome.classList.add('hidden'); 
-        pageUpload.classList.add('hidden'); 
-        pageAlbum.classList.remove('hidden'); 
-        currentAlbumPage = 1; 
-        updatePageVisibility(); 
-        window.scrollTo(0,0); 
-        
-        // MUSICA START
-        bgMusic.currentTime = 0;
-        bgMusic.play().then(() => {
-            isMusicPlaying = true;
-            updateMusicIcon();
-        }).catch(e => console.log("Autoplay bloqueado hasta interacción", e));
-    });
-
-    // AL SALIR DEL ALBUM, PAUSAMOS MUSICA
-    btnExitAlbum.addEventListener('click', () => { 
-        pageAlbum.classList.add('hidden'); 
-        pageHome.classList.remove('hidden'); 
-        
-        // MUSICA STOP
-        bgMusic.pause();
-        isMusicPlaying = false;
-        updateMusicIcon();
-    });
-
+    btnGoAlbum.addEventListener('click', () => { pageHome.classList.add('hidden'); pageUpload.classList.add('hidden'); pageAlbum.classList.remove('hidden'); currentAlbumPage = 1; updatePageVisibility(); window.scrollTo(0,0); });
     btnBackHome.addEventListener('click', () => { pageUpload.classList.add('hidden'); pageHome.classList.remove('hidden'); });
+    btnExitAlbum.addEventListener('click', () => { pageAlbum.classList.add('hidden'); pageHome.classList.remove('hidden'); });
 
     uploadTriggerBtn.addEventListener('click', () => realInput.click());
     dropZone.addEventListener('click', () => realInput.click());
