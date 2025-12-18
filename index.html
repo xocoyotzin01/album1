@@ -9,7 +9,7 @@
   <style>
     /* --- ESTILOS GENERALES --- */
     body { box-sizing: border-box; }
-    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Montserrat:wght@300;400;500&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,400&family=Montserrat:wght@300;400;500&display=swap');
     
     .font-serif-elegant { font-family: 'Cormorant Garamond', 'Georgia', serif; letter-spacing: 0.02em; }
     .font-sans-clean { font-family: 'Montserrat', 'Helvetica Neue', sans-serif; letter-spacing: 0.01em; }
@@ -109,7 +109,7 @@
             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" stroke-linecap="round" stroke-linejoin="round"/></svg>
             <span class="font-sans-clean text-sm font-bold tracking-wide">VER ÁLBUM DIGITAL</span> 
         </button>
-        <a id="btn-video-link" href="https://photos.app.goo.gl/TU_ENLACE_AQUI" target="_blank" class="w-full flex items-center justify-center gap-3 p-4 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-all cursor-pointer no-underline">
+        <a id="btn-video-link" href="https://drive.google.com/drive/folders/1SP3Qv_Q_sHLgWyTztKgth4USp2lv7qzm?usp=sharing" target="_blank" class="w-full flex items-center justify-center gap-3 p-4 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-all cursor-pointer no-underline">
             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round"/></svg>
             <span class="font-sans-clean text-sm font-bold tracking-wide">SUBIR VIDEO (Drive)</span> 
         </a>
@@ -126,18 +126,26 @@
       <div class="flex flex-col gap-8">
        <section class="flex-1 space-y-8 max-w-3xl mx-auto w-full">
         <input type="file" id="real-file-input" class="hidden" accept="image/png, image/jpeg, image/jpg, image/heic">
+        
         <div id="upload-section-container">
+            
+            <div class="mb-6 max-w-sm mx-auto">
+                 <input type="text" id="upload-message" placeholder="Escribe una dedicatoria breve (opcional)..." class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-[#c9a961] focus:ring-1 focus:ring-[#c9a961] outline-none font-sans-clean text-sm text-center bg-[#faf8f6] placeholder-gray-400">
+            </div>
+
             <div class="flex justify-center mb-4">
                 <button id="btn-upload-trigger" type="button" class="inline-flex items-center gap-3 px-8 py-3 bg-[#c9a961] text-white rounded-full font-sans-clean text-sm font-light tracking-wide shadow-lg hover:bg-[#b8985a] transition-all cursor-pointer">
                     <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12h14" stroke-linecap="round" /></svg>
                     <span>Seleccionar Foto</span> 
                 </button>
             </div>
+            
             <div id="drop-zone-trigger" class="upload-zone rounded-2xl bg-[#faf8f6] px-8 py-10 text-center cursor-pointer">
              <div class="flex flex-col items-center space-y-2">
               <p class="font-sans-clean text-sm text-gray-500 font-light">Solo fotos (JPG, PNG)</p>
              </div>
             </div>
+            
             <div id="upload-status-container" class="hidden mt-6 max-w-md mx-auto">
                 <div class="flex justify-between mb-1">
                   <span class="text-sm font-medium text-[#c9a961]">Subiendo...</span>
@@ -148,6 +156,7 @@
                 </div>
             </div>
         </div>
+        
         <div id="gallery-section-target" class="space-y-6 pt-12 border-t border-gray-100">
          <h3 class="font-serif-elegant text-2xl text-gray-800 text-center">Últimas Subidas</h3>
          <div id="firebase-gallery" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
@@ -228,14 +237,19 @@
         snapshot.forEach((doc) => {
             const d = doc.data();
             if(d.url_imagen) {
-                allPhotosData.push({ id: doc.id, url: d.url_imagen });
+                // GUARDAMOS URL, ID Y AHORA EL MENSAJE
+                allPhotosData.push({ 
+                    id: doc.id, 
+                    url: d.url_imagen,
+                    message: d.mensaje || "" // Mensaje por defecto vacío
+                });
             }
         });
         updateUploadGrid(allPhotosData);
         buildDynamicAlbum(allPhotosData);
     });
 
-    // --- CONSTRUCTOR DE ÁLBUM (Responsive Mobile) ---
+    // --- CONSTRUCTOR DE ÁLBUM ---
     function buildDynamicAlbum(photos) {
         albumContainer.innerHTML = ''; 
         
@@ -304,10 +318,24 @@
         albumContainer.appendChild(div);
     }
 
-    // --- TEMPLATES RESPONSIVOS (Mobile Friendly) ---
+    // --- TEMPLATES RESPONSIVOS + MENSAJES DE INVITADOS ---
     function imgTag(imgObj) {
         if(!imgObj) return '';
+        // Si hay mensaje, mostramos la imagen, pero el texto se maneja en el layout
         return `<img src="${imgObj.url}" title="ID: ${imgObj.id}" oncontextmenu="console.log('${imgObj.id}'); return true;" class="w-full h-full object-cover">`;
+    }
+
+    // Función auxiliar para generar el HTML del texto del invitado
+    function getTextHTML(msg) {
+        if(!msg) return '';
+        return `
+            <div class="w-full h-full flex items-center justify-center p-4 bg-[#faf8f6]">
+                <div class="text-center">
+                    <p class="font-serif-elegant text-xl md:text-2xl text-gray-600 italic leading-relaxed">"${msg}"</p>
+                    <div class="w-8 h-px bg-[#c9a961] mx-auto mt-4 opacity-50"></div>
+                </div>
+            </div>
+        `;
     }
 
     function getStaticTemplate(text) {
@@ -318,44 +346,74 @@
             </div>`;
     }
 
-    // Aquí está la magia responsiva: "flex-col md:flex-row"
+    // AQUI COLOCAMOS LOS MENSAJES EN LOS ESPACIOS EN BLANCO
     function getPhotoTemplate(type, items) {
         const i1 = items[0];
         const i2 = items[1];
         const i3 = items[2];
 
+        // Layout Full: Si tiene mensaje, lo ponemos abajo superpuesto
         if(type === 'full') {
-            return `<div class="p-4 md:p-8 w-full h-full"><div class="album-photo w-full h-full rounded-sm shadow-sm">${imgTag(i1)}</div></div>`;
+            const msgHTML = i1.message ? 
+                `<div class="absolute bottom-0 left-0 right-0 p-6 md:p-8 bg-gradient-to-t from-black/70 to-transparent text-white text-center">
+                    <p class="font-serif-elegant text-lg md:text-2xl italic">"${i1.message}"</p>
+                 </div>` : '';
+            return `<div class="p-4 md:p-8 w-full h-full relative">
+                        <div class="album-photo w-full h-full rounded-sm shadow-sm relative">
+                            ${imgTag(i1)}
+                            ${msgHTML}
+                        </div>
+                    </div>`;
         }
+        
+        // Split: Espacio vacío a la derecha abajo se usa para texto
         if(type === 'split') {
-            // En movil: Columna (uno arriba otro abajo). En PC: Fila (lado a lado)
+            const extraContent = i1.message ? getTextHTML(i1.message) : (i2 && i2.message ? getTextHTML(i2.message) : '<div class="hidden md:block"></div>');
+
             return `<div class="p-6 md:p-12 flex flex-col md:flex-row gap-4 md:gap-6 w-full h-full">
                       <div class="w-full md:w-2/3 h-1/2 md:h-full album-photo rounded-sm shadow-sm">${imgTag(i1)}</div>
                       <div class="w-full md:w-1/3 h-1/2 md:h-full flex flex-row md:flex-col gap-4 md:gap-6">
                         <div class="flex-1 album-photo rounded-sm shadow-sm">${imgTag(i2)}</div>
-                        <div class="flex-1 hidden md:block"></div>
+                        <div class="flex-1 flex items-center justify-center">${extraContent}</div>
                       </div>
                     </div>`;
         }
+
+        // Right: Espacio vacío a la izquierda se usa para texto
         if(type === 'right') {
-            return `<div class="p-6 md:p-12 flex items-center justify-center md:justify-end w-full h-full">
+            const textSide = i1.message ? getTextHTML(i1.message) : '';
+            return `<div class="p-6 md:p-12 flex flex-col-reverse md:flex-row items-center justify-center md:justify-end w-full h-full gap-6">
+                      <div class="w-full md:w-2/5 h-auto md:h-full flex items-center justify-center">${textSide}</div>
                       <div class="w-full md:w-3/5 h-4/5 album-photo rounded-sm shadow-sm">${imgTag(i1)}</div>
                     </div>`;
         }
+
+        // Diagonal: Si hay mensaje, se pone en una esquina vacía
         if(type === 'diagonal') {
+             // Este es difícil poner texto sin romper el diseño, usamos overlay sutil si hay texto
+             const msg1 = i1.message ? `<div class="absolute bottom-0 w-full p-2 bg-black/50 text-white text-xs text-center font-serif-elegant italic">"${i1.message}"</div>` : '';
+             const msg2 = i2 && i2.message ? `<div class="absolute bottom-0 w-full p-2 bg-black/50 text-white text-xs text-center font-serif-elegant italic">"${i2.message}"</div>` : '';
+
             return `<div class="p-6 md:p-16 flex flex-col justify-between w-full h-full gap-4">
-                      <div class="w-3/4 md:w-2/5 h-2/5 album-photo rounded-sm shadow-sm">${imgTag(i1)}</div>
-                      <div class="w-3/4 md:w-2/5 h-2/5 album-photo rounded-sm self-end shadow-sm">${imgTag(i2)}</div>
+                      <div class="w-3/4 md:w-2/5 h-2/5 album-photo rounded-sm shadow-sm relative">${imgTag(i1)}${msg1}</div>
+                      <div class="w-3/4 md:w-2/5 h-2/5 album-photo rounded-sm self-end shadow-sm relative">${imgTag(i2)}${msg2}</div>
                     </div>`;
         }
+
+        // BigSmall: Espacio encima de la foto pequeña
         if(type === 'bigsmall') {
+            const textSpace = i1.message ? getTextHTML(i1.message) : '';
             return `<div class="p-4 md:p-10 flex flex-col md:flex-row gap-4 md:gap-8 items-end w-full h-full">
                       <div class="w-full md:w-3/4 h-3/4 md:h-full album-photo rounded-sm shadow-sm">${imgTag(i1)}</div>
-                      <div class="w-1/2 md:w-1/4 h-1/4 md:h-2/5 album-photo rounded-sm shadow-sm">${imgTag(i2)}</div>
+                      <div class="w-1/2 md:w-1/4 h-full md:h-full flex flex-col justify-end gap-4">
+                            <div class="flex-1 flex items-end pb-4">${textSpace}</div>
+                            <div class="h-1/4 md:h-2/5 album-photo rounded-sm shadow-sm">${imgTag(i2)}</div>
+                      </div>
                     </div>`;
         }
+
+        // Grid3: Sin espacio para texto grande, usamos overlay
         if(type === 'grid3') {
-            // Movil: Grid 1 col. PC: Grid 2 cols
             return `<div class="p-6 md:p-12 grid grid-rows-3 md:grid-rows-1 grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 w-full h-full">
                       <div class="album-photo rounded-sm md:row-span-2 shadow-sm">${imgTag(i1)}</div>
                       <div class="album-photo rounded-sm shadow-sm">${imgTag(i2)}</div>
@@ -436,9 +494,12 @@
     const btnGoAlbum = document.getElementById('btn-go-album');
     const btnBackHome = document.getElementById('btn-back-home');
     const btnExitAlbum = document.getElementById('btn-exit-album');
+    
     const realInput = document.getElementById('real-file-input');
     const uploadTriggerBtn = document.getElementById('btn-upload-trigger');
     const dropZone = document.getElementById('drop-zone-trigger');
+    const messageInput = document.getElementById('upload-message'); // Nuevo input
+
     const statusContainer = document.getElementById('upload-status-container');
     const progressBarFill = document.getElementById('progress-bar-fill');
     const progressText = document.getElementById('progress-text');
@@ -480,11 +541,19 @@
             (error) => { console.error(error); }, 
             async () => {
                 const url = await getDownloadURL(uploadTask.snapshot.ref);
-                await addDoc(collection(db, "album"), { url_imagen: url, fecha: serverTimestamp() });
+                
+                // GUARDAR EN BASE DE DATOS CON MENSAJE
+                await addDoc(collection(db, "album"), { 
+                    url_imagen: url, 
+                    mensaje: messageInput.value || "", // Guardamos lo que escribió el usuario
+                    fecha: serverTimestamp() 
+                });
+
                 showToast("¡Foto subida!");
                 uploadTriggerBtn.disabled = false;
                 statusContainer.classList.add('hidden');
                 realInput.value = '';
+                messageInput.value = ''; // Limpiamos el campo de texto
             }
         );
     });
