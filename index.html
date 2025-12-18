@@ -310,11 +310,14 @@
     const firebaseGallery = document.getElementById('firebase-gallery');
     const btnDownloadPDF = document.getElementById('btn-download-pdf');
 
-    // --- CHECK DE FECHA PARA EL PDF ---
+    // --- CHECK DE VISIBILIDAD PDF ---
     function checkPDFButtonVisibility() {
         const now = new Date();
-        if (now >= FECHA_DESBLOQUEO) {
+        // Muestra si la fecha pasó O si es admin
+        if (now >= FECHA_DESBLOQUEO || isAdminMode) {
             btnDownloadPDF.classList.remove('hidden');
+        } else {
+            btnDownloadPDF.classList.add('hidden');
         }
     }
     // Ejecutar al inicio y cada minuto
@@ -452,6 +455,8 @@
             if (isAdminMode) {
                 isAdminMode = false;
                 alert("🔒 Modo Admin DESACTIVADO");
+                // Actualizar vistas
+                checkPDFButtonVisibility();
                 updateUploadGrid(allPhotosData);
                 buildDynamicAlbum(allPhotosData);
             } else {
@@ -459,6 +464,8 @@
                 if(pwd === "boda2025") { 
                     isAdminMode = true;
                     alert("✅ Modo Admin ACTIVADO");
+                    // Actualizar vistas
+                    checkPDFButtonVisibility();
                     updateUploadGrid(allPhotosData);
                     buildDynamicAlbum(allPhotosData);
                 } else if (pwd !== null) {
@@ -714,9 +721,11 @@
             const div = document.createElement('div');
             div.className = "aspect-square rounded-lg shadow-sm overflow-hidden bg-gray-100 relative";
             const deleteBtn = isAdminMode ? `<div class="delete-btn" onclick="window.deletePhoto('${item.id}')">🗑️</div>` : '';
+            
             let content;
             if(item.type === 'video') content = `<video src="${item.url}" class="w-full h-full object-cover"></video>`;
             else content = `<img src="${item.url}" class="w-full h-full object-cover" loading="lazy">`;
+
             div.innerHTML = `${deleteBtn}${content}`;
             firebaseGallery.appendChild(div);
         });
