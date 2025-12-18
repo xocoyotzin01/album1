@@ -2,7 +2,7 @@
 <html lang="es" class="h-full">
  <head>
   <meta charset="UTF-8">
-  <title> Laura & Xocoyotzin | Álbum Infinito</title>
+  <title>Boda Laura + X | Álbum Infinito</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <script src="https://cdn.tailwindcss.com"></script>
   
@@ -16,15 +16,10 @@
 
     html, body, .app-wrapper { height: 100%; width: 100%; }
 
-    /* Fondo decorativo Home */
-    .photo-vertical {
-      background: linear-gradient(180deg, #f8f6f4 0%, #ede8e3 50%, #e8e0d8 100%);
+    /* Estilos para la foto de portada */
+    .cover-image-container {
       position: relative; overflow: hidden;
-    }
-    .photo-vertical::before {
-      content: ""; position: absolute; inset: 0;
-      background-image: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.9) 0%, transparent 50%);
-      opacity: 0.95;
+      background-color: #f0f0f0; /* Color de fondo mientras carga */
     }
     
     .upload-zone {
@@ -91,16 +86,20 @@
    <main class="flex-1 h-full">
     
     <section id="page-home" class="bg-white min-h-screen flex flex-col md:flex-row">
-     <div class="w-full md:w-1/2 h-64 md:h-auto photo-vertical flex items-center justify-center">
-        <span class="font-serif-elegant text-4xl text-gray-400 opacity-30">L & X</span>
+     
+     <div class="w-full md:w-1/2 h-64 md:h-auto cover-image-container flex items-center justify-center">
+        <img src="foto_principal.jpg" alt="Bienvenidos a nuestra boda" class="w-full h-full object-cover">
+        
+        <div class="absolute inset-0 bg-black/10 pointer-events-none"></div>
      </div>
+
      <div class="w-full md:w-1/2 flex flex-col justify-center p-8 md:p-16 lg:p-20">
       <div class="flex-1 flex flex-col justify-center space-y-6">
        <div class="text-center md:text-left cursor-pointer select-none" id="secret-admin-trigger">
-        <span class="font-serif-elegant text-3xl md:text-4xl text-[#c9a961] font-light tracking-widest">L + X</span>
+        <span class="font-serif-elegant text-3xl md:text-4xl text-[#c9a961] font-light tracking-widest hover:text-[#b8985a] transition-colors">L + X</span>
        </div>
        <div class="text-center md:text-left space-y-2">
-        <p class="font-serif-elegant text-base md:text-lg text-[#c9a961] font-light tracking-widest">— Nuestra Boda —</p>
+        <p class="font-serif-elegant text-base md:text-lg text-[#c9a961] font-light tracking-widest">— NUESTRO DÍA ESPECIAL —</p>
         <p class="font-serif-elegant text-3xl md:text-4xl text-gray-800 font-light">2025</p>
        </div>
        <article class="text-center md:text-left space-y-4">
@@ -248,23 +247,34 @@
         }
     }
 
-    // --- ACTIVADOR MODO ADMIN (TRIPLE CLIC EN LOGO) ---
+    // --- ACTIVADOR MODO ADMIN (INTERRUPTOR ON/OFF) ---
     const secretTrigger = document.getElementById('secret-admin-trigger');
     let clickCount = 0;
     
     secretTrigger.addEventListener('click', () => {
         clickCount++;
         if(clickCount === 3) {
-            const pwd = prompt("🔒 Modo Admin: Ingresa la contraseña");
-            if(pwd === "boda2025") { // CAMBIA TU CONTRASEÑA AQUI
-                isAdminMode = true;
-                alert("✅ Modo Admin Activado: Ahora verás iconos de basura para borrar fotos.");
-                // Recargamos las vistas para que aparezcan los botones
+            
+            if (isAdminMode) {
+                // SI YA ES ADMIN -> APAGAR
+                isAdminMode = false;
+                alert("🔒 Modo Admin DESACTIVADO");
+                // Actualizar vistas para quitar los iconos de basura
                 updateUploadGrid(allPhotosData);
                 buildDynamicAlbum(allPhotosData);
             } else {
-                alert("❌ Contraseña incorrecta");
+                // SI NO ES ADMIN -> PRENDER
+                const pwd = prompt("🔒 Modo Admin: Ingresa la contraseña");
+                if(pwd === "boda2025") { // CAMBIA TU CONTRASEÑA AQUI
+                    isAdminMode = true;
+                    alert("✅ Modo Admin ACTIVADO: Ahora verás iconos de basura para borrar fotos.");
+                    updateUploadGrid(allPhotosData);
+                    buildDynamicAlbum(allPhotosData);
+                } else if (pwd !== null) {
+                    alert("❌ Contraseña incorrecta");
+                }
             }
+            
             clickCount = 0;
         }
         // Reseteo de clicks si tarda mucho
@@ -360,12 +370,11 @@
     // --- TEMPLATES + BOTÓN DELETE ---
     function imgTag(imgObj) {
         if(!imgObj) return '';
-        // SI ES ADMIN, MOSTRAMOS EL BOTÓN DE BASURA
         const deleteBtn = isAdminMode ? 
             `<div class="delete-btn" onclick="window.deletePhoto('${imgObj.id}')">🗑️</div>` : '';
         
         return `
-            <div class="w-full h-full relative">
+            <div class="w-full h-full relative group">
                 ${deleteBtn}
                 <img src="${imgObj.url}" class="w-full h-full object-cover">
             </div>
@@ -435,8 +444,8 @@
              const msg2 = i2 && i2.message ? `<div class="absolute bottom-0 w-full p-2 bg-black/50 text-white text-xs text-center font-serif-elegant italic pointer-events-none">"${i2.message}"</div>` : '';
 
             return `<div class="p-6 md:p-16 flex flex-col justify-between w-full h-full gap-4">
-                      <div class="w-3/4 md:w-2/5 h-2/5 album-photo rounded-sm shadow-sm relative">${imgTag(i1)}${msg1}</div>
-                      <div class="w-3/4 md:w-2/5 h-2/5 album-photo rounded-sm self-end shadow-sm relative">${imgTag(i2)}${msg2}</div>
+                      <div class="w-3/4 md:w-2/5 h-2/5 album-photo rounded-sm shadow-sm relative group">${imgTag(i1)}${msg1}</div>
+                      <div class="w-3/4 md:w-2/5 h-2/5 album-photo rounded-sm self-end shadow-sm relative group">${imgTag(i2)}${msg2}</div>
                     </div>`;
         }
 
@@ -520,7 +529,6 @@
             const div = document.createElement('div');
             div.className = "aspect-square rounded-lg shadow-sm overflow-hidden bg-gray-100 relative";
             
-            // ADMIN DELETE BTN TAMBIEN AQUI
             const deleteBtn = isAdminMode ? 
                 `<div class="delete-btn" onclick="window.deletePhoto('${item.id}')">🗑️</div>` : '';
             
