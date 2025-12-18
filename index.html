@@ -2,7 +2,7 @@
 <html lang="es" class="h-full">
  <head>
   <meta charset="UTF-8">
-  <title> Nuestra Boda Laura & Xocoyotzin | Álbum Infinito</title>
+  <title>Boda Laura + X | Álbum Infinito</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <script src="https://cdn.tailwindcss.com"></script>
   
@@ -39,7 +39,6 @@
       overflow: hidden;
       transition: opacity 0.6s ease, transform 0.6s ease;
     }
-    /* Clases para animación de pase de página */
     .album-page.page-exit { opacity: 0; transform: translateX(-30px); }
     .album-page.page-enter { opacity: 0; transform: translateX(30px); }
     .album-page.page-active { opacity: 1; transform: translateX(0); }
@@ -70,6 +69,18 @@
     }
     .album-nav-arrow:hover { opacity: 1; background: rgba(255, 255, 255, 0.9); }
     
+    /* ESTILO BOTÓN BORRAR (ADMIN) */
+    .delete-btn {
+        position: absolute; top: 5px; right: 5px;
+        background: rgba(220, 38, 38, 0.9); color: white;
+        width: 30px; height: 30px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; z-index: 50;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        font-size: 16px; border: 2px solid white;
+    }
+    .delete-btn:hover { background: red; transform: scale(1.1); }
+
     html { scroll-behavior: smooth; }
   </style>
  </head>
@@ -85,7 +96,7 @@
      </div>
      <div class="w-full md:w-1/2 flex flex-col justify-center p-8 md:p-16 lg:p-20">
       <div class="flex-1 flex flex-col justify-center space-y-6">
-       <div class="text-center md:text-left">
+       <div class="text-center md:text-left cursor-pointer select-none" id="secret-admin-trigger">
         <span class="font-serif-elegant text-3xl md:text-4xl text-[#c9a961] font-light tracking-widest">L + X</span>
        </div>
        <div class="text-center md:text-left space-y-2">
@@ -128,7 +139,6 @@
         <input type="file" id="real-file-input" class="hidden" accept="image/png, image/jpeg, image/jpg, image/heic">
         
         <div id="upload-section-container">
-            
             <div class="mb-6 max-w-sm mx-auto">
                  <input type="text" id="upload-message" placeholder="Escribe una dedicatoria breve (opcional)..." class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-[#c9a961] focus:ring-1 focus:ring-[#c9a961] outline-none font-sans-clean text-sm text-center bg-[#faf8f6] placeholder-gray-400">
             </div>
@@ -169,7 +179,6 @@
     </section>
 
     <section id="page-album" class="hidden bg-[#ebe5df] w-full h-screen fixed top-0 left-0 z-50 flex flex-col">
-        
         <div class="w-full h-16 flex items-center px-4 bg-white/60 backdrop-blur shadow-sm z-50 shrink-0">
              <button id="btn-exit-album" class="flex items-center gap-2 px-3 py-1.5 bg-white rounded-full text-[#c9a961] shadow-sm font-sans-clean text-sm font-bold border border-gray-100">
                 <span>← Volver</span>
@@ -181,13 +190,10 @@
 
         <div class="flex-1 w-full relative overflow-hidden md:p-10 bg-[#ebe5df]">
             <div class="relative bg-white shadow-2xl overflow-hidden w-full h-full md:rounded-sm md:aspect-[16/10] md:h-auto md:max-h-[85vh] md:mx-auto">
-              
-              <div id="album-container" class="w-full h-full relative">
-                 </div>
+              <div id="album-container" class="w-full h-full relative"></div>
 
               <button id="album-next" type="button" class="focus-ring album-nav-arrow absolute right-2 md:right-4 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shadow-lg z-10 bg-white/80"><svg class="w-6 h-6 text-[#c9a961]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round" /></svg></button> 
               <button id="album-prev" type="button" class="focus-ring album-nav-arrow absolute left-2 md:left-4 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shadow-lg hidden z-10 bg-white/80"><svg class="w-6 h-6 text-[#c9a961]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round" /></svg></button> 
-              
             </div>
         </div>
     </section>
@@ -200,7 +206,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
-    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     // --- CONFIGURACIÓN FIREBASE ---
     const firebaseConfig = {
@@ -220,6 +226,7 @@
     let allPhotosData = []; 
     let currentAlbumPage = 1;
     let totalAlbumPages = 1;
+    let isAdminMode = false; // MODO ADMIN OFF POR DEFECTO
 
     // DOM Elements
     const albumContainer = document.getElementById('album-container');
@@ -229,6 +236,41 @@
     const albumPrev = document.getElementById("album-prev");
     const firebaseGallery = document.getElementById('firebase-gallery');
 
+    // --- FUNCION BORRAR (EXPUESTA A WINDOW) ---
+    window.deletePhoto = async (id) => {
+        if(confirm("⚠️ ¿Estás seguro de borrar esta foto para siempre?")) {
+            try {
+                await deleteDoc(doc(db, "album", id));
+                showToast("Foto eliminada 🗑️");
+            } catch (e) {
+                alert("Error al borrar: " + e.message);
+            }
+        }
+    }
+
+    // --- ACTIVADOR MODO ADMIN (TRIPLE CLIC EN LOGO) ---
+    const secretTrigger = document.getElementById('secret-admin-trigger');
+    let clickCount = 0;
+    
+    secretTrigger.addEventListener('click', () => {
+        clickCount++;
+        if(clickCount === 3) {
+            const pwd = prompt("🔒 Modo Admin: Ingresa la contraseña");
+            if(pwd === "boda2025") { // CAMBIA TU CONTRASEÑA AQUI
+                isAdminMode = true;
+                alert("✅ Modo Admin Activado: Ahora verás iconos de basura para borrar fotos.");
+                // Recargamos las vistas para que aparezcan los botones
+                updateUploadGrid(allPhotosData);
+                buildDynamicAlbum(allPhotosData);
+            } else {
+                alert("❌ Contraseña incorrecta");
+            }
+            clickCount = 0;
+        }
+        // Reseteo de clicks si tarda mucho
+        setTimeout(() => clickCount = 0, 2000);
+    });
+
     // --- ESCUCHAR FOTOS ---
     const q = query(collection(db, "album"), orderBy("fecha", "desc"));
 
@@ -237,11 +279,10 @@
         snapshot.forEach((doc) => {
             const d = doc.data();
             if(d.url_imagen) {
-                // GUARDAMOS URL, ID Y AHORA EL MENSAJE
                 allPhotosData.push({ 
                     id: doc.id, 
                     url: d.url_imagen,
-                    message: d.mensaje || "" // Mensaje por defecto vacío
+                    message: d.mensaje || "" 
                 });
             }
         });
@@ -253,7 +294,6 @@
     function buildDynamicAlbum(photos) {
         albumContainer.innerHTML = ''; 
         
-        // Portada
         addPageHTML(`
            <div class="flex flex-col items-center justify-center p-6 md:p-12 text-center h-full">
             <h2 class="font-serif-elegant text-5xl md:text-7xl text-[#c9a961] font-light mb-6 tracking-wide">una mirada,<br>mil recuerdos.</h2>
@@ -297,7 +337,6 @@
             }
         }
 
-        // Contraportada
         addPageHTML(`
            <div class="flex flex-col items-center justify-center p-6 md:p-16 text-center h-full">
             <h2 class="font-serif-elegant text-3xl md:text-5xl text-[#c9a961] font-light mb-8">• felices por siempre •</h2>
@@ -318,14 +357,21 @@
         albumContainer.appendChild(div);
     }
 
-    // --- TEMPLATES RESPONSIVOS + MENSAJES DE INVITADOS ---
+    // --- TEMPLATES + BOTÓN DELETE ---
     function imgTag(imgObj) {
         if(!imgObj) return '';
-        // Si hay mensaje, mostramos la imagen, pero el texto se maneja en el layout
-        return `<img src="${imgObj.url}" title="ID: ${imgObj.id}" oncontextmenu="console.log('${imgObj.id}'); return true;" class="w-full h-full object-cover">`;
+        // SI ES ADMIN, MOSTRAMOS EL BOTÓN DE BASURA
+        const deleteBtn = isAdminMode ? 
+            `<div class="delete-btn" onclick="window.deletePhoto('${imgObj.id}')">🗑️</div>` : '';
+        
+        return `
+            <div class="w-full h-full relative">
+                ${deleteBtn}
+                <img src="${imgObj.url}" class="w-full h-full object-cover">
+            </div>
+        `;
     }
 
-    // Función auxiliar para generar el HTML del texto del invitado
     function getTextHTML(msg) {
         if(!msg) return '';
         return `
@@ -346,27 +392,24 @@
             </div>`;
     }
 
-    // AQUI COLOCAMOS LOS MENSAJES EN LOS ESPACIOS EN BLANCO
     function getPhotoTemplate(type, items) {
         const i1 = items[0];
         const i2 = items[1];
         const i3 = items[2];
 
-        // Layout Full: Si tiene mensaje, lo ponemos abajo superpuesto
         if(type === 'full') {
             const msgHTML = i1.message ? 
-                `<div class="absolute bottom-0 left-0 right-0 p-6 md:p-8 bg-gradient-to-t from-black/70 to-transparent text-white text-center">
+                `<div class="absolute bottom-0 left-0 right-0 p-6 md:p-8 bg-gradient-to-t from-black/70 to-transparent text-white text-center pointer-events-none">
                     <p class="font-serif-elegant text-lg md:text-2xl italic">"${i1.message}"</p>
                  </div>` : '';
             return `<div class="p-4 md:p-8 w-full h-full relative">
-                        <div class="album-photo w-full h-full rounded-sm shadow-sm relative">
+                        <div class="album-photo w-full h-full rounded-sm shadow-sm relative group">
                             ${imgTag(i1)}
                             ${msgHTML}
                         </div>
                     </div>`;
         }
         
-        // Split: Espacio vacío a la derecha abajo se usa para texto
         if(type === 'split') {
             const extraContent = i1.message ? getTextHTML(i1.message) : (i2 && i2.message ? getTextHTML(i2.message) : '<div class="hidden md:block"></div>');
 
@@ -379,7 +422,6 @@
                     </div>`;
         }
 
-        // Right: Espacio vacío a la izquierda se usa para texto
         if(type === 'right') {
             const textSide = i1.message ? getTextHTML(i1.message) : '';
             return `<div class="p-6 md:p-12 flex flex-col-reverse md:flex-row items-center justify-center md:justify-end w-full h-full gap-6">
@@ -388,11 +430,9 @@
                     </div>`;
         }
 
-        // Diagonal: Si hay mensaje, se pone en una esquina vacía
         if(type === 'diagonal') {
-             // Este es difícil poner texto sin romper el diseño, usamos overlay sutil si hay texto
-             const msg1 = i1.message ? `<div class="absolute bottom-0 w-full p-2 bg-black/50 text-white text-xs text-center font-serif-elegant italic">"${i1.message}"</div>` : '';
-             const msg2 = i2 && i2.message ? `<div class="absolute bottom-0 w-full p-2 bg-black/50 text-white text-xs text-center font-serif-elegant italic">"${i2.message}"</div>` : '';
+             const msg1 = i1.message ? `<div class="absolute bottom-0 w-full p-2 bg-black/50 text-white text-xs text-center font-serif-elegant italic pointer-events-none">"${i1.message}"</div>` : '';
+             const msg2 = i2 && i2.message ? `<div class="absolute bottom-0 w-full p-2 bg-black/50 text-white text-xs text-center font-serif-elegant italic pointer-events-none">"${i2.message}"</div>` : '';
 
             return `<div class="p-6 md:p-16 flex flex-col justify-between w-full h-full gap-4">
                       <div class="w-3/4 md:w-2/5 h-2/5 album-photo rounded-sm shadow-sm relative">${imgTag(i1)}${msg1}</div>
@@ -400,7 +440,6 @@
                     </div>`;
         }
 
-        // BigSmall: Espacio encima de la foto pequeña
         if(type === 'bigsmall') {
             const textSpace = i1.message ? getTextHTML(i1.message) : '';
             return `<div class="p-4 md:p-10 flex flex-col md:flex-row gap-4 md:gap-8 items-end w-full h-full">
@@ -412,7 +451,6 @@
                     </div>`;
         }
 
-        // Grid3: Sin espacio para texto grande, usamos overlay
         if(type === 'grid3') {
             return `<div class="p-6 md:p-12 grid grid-rows-3 md:grid-rows-1 grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 w-full h-full">
                       <div class="album-photo rounded-sm md:row-span-2 shadow-sm">${imgTag(i1)}</div>
@@ -480,8 +518,16 @@
         }
         photos.forEach(item => {
             const div = document.createElement('div');
-            div.className = "aspect-square rounded-lg shadow-sm overflow-hidden bg-gray-100";
-            div.innerHTML = `<img src="${item.url}" class="w-full h-full object-cover" loading="lazy">`;
+            div.className = "aspect-square rounded-lg shadow-sm overflow-hidden bg-gray-100 relative";
+            
+            // ADMIN DELETE BTN TAMBIEN AQUI
+            const deleteBtn = isAdminMode ? 
+                `<div class="delete-btn" onclick="window.deletePhoto('${item.id}')">🗑️</div>` : '';
+            
+            div.innerHTML = `
+                ${deleteBtn}
+                <img src="${item.url}" class="w-full h-full object-cover" loading="lazy">
+            `;
             firebaseGallery.appendChild(div);
         });
     }
@@ -498,7 +544,7 @@
     const realInput = document.getElementById('real-file-input');
     const uploadTriggerBtn = document.getElementById('btn-upload-trigger');
     const dropZone = document.getElementById('drop-zone-trigger');
-    const messageInput = document.getElementById('upload-message'); // Nuevo input
+    const messageInput = document.getElementById('upload-message'); 
 
     const statusContainer = document.getElementById('upload-status-container');
     const progressBarFill = document.getElementById('progress-bar-fill');
@@ -542,10 +588,9 @@
             async () => {
                 const url = await getDownloadURL(uploadTask.snapshot.ref);
                 
-                // GUARDAR EN BASE DE DATOS CON MENSAJE
                 await addDoc(collection(db, "album"), { 
                     url_imagen: url, 
-                    mensaje: messageInput.value || "", // Guardamos lo que escribió el usuario
+                    mensaje: messageInput.value || "", 
                     fecha: serverTimestamp() 
                 });
 
@@ -553,7 +598,7 @@
                 uploadTriggerBtn.disabled = false;
                 statusContainer.classList.add('hidden');
                 realInput.value = '';
-                messageInput.value = ''; // Limpiamos el campo de texto
+                messageInput.value = ''; 
             }
         );
     });
