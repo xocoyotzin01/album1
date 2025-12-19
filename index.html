@@ -290,20 +290,23 @@
     // --- CONFIGURACIÓN: FECHA DE DESBLOQUEO DEL PDF ---
     const FECHA_DESBLOQUEO = new Date("2025-12-27T00:00:00"); 
 
-    // --- CONFIGURACIÓN FIREBASE ---
+// --- CONFIGURACIÓN FIREBASE (NUEVA: album-1) ---
     const firebaseConfig = {
-        apiKey: "AIzaSyDZq3NMlUtJrIaSVmoA7CvVvOyuHtsUt9Y",
-        authDomain: "album-2-9e7e5.firebaseapp.com",
-        projectId: "album-2-9e7e5",
-        storageBucket: "album-2-9e7e5.firebasestorage.app",
-        messagingSenderId: "490580306906",
-        appId: "1:490580306906:web:d8abad10c419be1730eee3"
+        apiKey: "AIzaSyAvolaQ6JKQpsDuJZkQjRJVD2RS3pT6e0A",
+        authDomain: "album-1-a70e1.firebaseapp.com",
+        projectId: "album-1-a70e1",
+        storageBucket: "album-1-a70e1.firebasestorage.app",
+        messagingSenderId: "439468283376",
+        appId: "1:439468283376:web:bf7de391d491350eec7935"
     };
 
+    // Inicializar Firebase
     const app = initializeApp(firebaseConfig);
-    const storage = getStorage(app);
-    const db = getFirestore(app);
 
+    // --- ESTAS LÍNEAS SON VITALES PARA EL ÁLBUM (No las borres) ---
+    const storage = getStorage(app); 
+    const db = getFirestore(app);
+   
     // --- VARIABLES GLOBALES ---
     let allPhotosData = []; 
     let currentAlbumPage = 1;
